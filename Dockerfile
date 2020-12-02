@@ -1,0 +1,25 @@
+# install and build
+FROM nginx as builder
+
+WORKDIR /usr/share/nginx/html
+RUN apt update & apt upgrade
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt install -y nodejs
+
+COPY package.json .
+COPY package-lock.json .
+RUN npm install
+
+COPY tsconfig.json tsconfig.json
+COPY public public
+COPY src src
+RUN npm run build
+
+# deploy
+FROM nginx
+
+WORKDIR /usr/share/nginx/html
+COPY --from=builder /usr/share/nginx/html/build .
+COPY nginx.conf nginx.conf
+
+CMD ["nginx", "-g", "daemon off;"]
