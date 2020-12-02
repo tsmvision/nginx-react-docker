@@ -1,10 +1,8 @@
 # install and build
-FROM nginx as builder
+FROM nginx:stable-alpine as builder
 
-WORKDIR /usr/share/nginx/html
-RUN apt update & apt upgrade
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
-RUN apt install -y nodejs
+WORKDIR /www
+RUN apk add --update npm
 
 COPY package.json .
 COPY package-lock.json .
@@ -16,10 +14,10 @@ COPY src src
 RUN npm run build
 
 # deploy
-FROM nginx
+FROM nginx:stable-alpine
 
-WORKDIR /usr/share/nginx/html
-COPY --from=builder /usr/share/nginx/html/build .
-COPY nginx.conf nginx.conf
+WORKDIR /www
+COPY --from=builder /www/build .
+COPY nginx.conf /etc/nginx/
 
 CMD ["nginx", "-g", "daemon off;"]
